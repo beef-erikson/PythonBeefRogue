@@ -1,2 +1,2 @@
 # Python BeefRogue
-Python prototyping of BeefRogue for SDL version using libtcod
+Python prototyping of BeefRogue (SDL Version) using libtcod
