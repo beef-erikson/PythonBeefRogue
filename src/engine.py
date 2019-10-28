@@ -1,7 +1,8 @@
 import tcod
 
-from entity import Entity
+from entity import Entity, get_blocking_entities_at_location
 from fov_functions import initialize_fov, recompute_fov
+from game_states import GameStates
 from input_handlers import handle_keys
 from render_functions import clear_all, render_all
 from src.map_objects.game_map import GameMap
@@ -26,6 +27,10 @@ def main():
     fov_light_walls = True
     fov_radius = 10
 
+    # Monster variables
+    max_monsters_per_room = 3
+
+    # Dungeon colors
     colors = {
         'dark_wall': tcod.Color(0, 0, 100),
         'dark_ground': tcod.Color(50, 50, 150),
@@ -35,10 +40,9 @@ def main():
 
     game_title = 'BeefRogue 2019.0.1'
 
-    # Load entities
-    player = Entity(int(screen_width / 2), int(screen_height / 2), '@', tcod.white)
-    npc = Entity(int(screen_width / 2 - 5), int(screen_height / 2), '@', tcod.yellow)
-    entities = [npc, player]
+    # Load player
+    player = Entity(0, 0, '@', tcod.white, 'Player', blocks=True)
+    entities = [player]
 
     # Sets font
     tcod.console_set_custom_font('arial10x10.png', tcod.FONT_TYPE_GREYSCALE | tcod.FONT_LAYOUT_TCOD)
@@ -49,7 +53,8 @@ def main():
 
     # Initializes game map
     game_map = GameMap(map_width, map_height)
-    game_map.make_map(max_rooms, room_min_size, room_max_size, map_width, map_height, player)
+    game_map.make_map(max_rooms, room_min_size, room_max_size, map_width, map_height, player,
+                      entities, max_monsters_per_room)
 
     # Field of view variables
     fov_recompute = True        # We only need to recompute when character moves
@@ -58,6 +63,9 @@ def main():
     # Variables for keyboard and mouse inputs
     key = tcod.Key()
     mouse = tcod.Mouse()
+
+    # Player goes first
+    game_state = GameStates.PLAYERS_TURN
 
     # Main game loop
     while not tcod.console_is_window_closed():
@@ -82,17 +90,35 @@ def main():
         exit = action.get('exit')
         fullscreen = action.get('fullscreen')
 
-        if move:
+        if move and game_state == GameStates.PLAYERS_TURN:
             dx, dy = move
-            if not game_map.is_blocked(player.x + dx, player.y + dy):
-                player.move(dx, dy)
-                fov_recompute = True
+            destination_x = player.x + dx
+            destination_y = player.y + dy
+
+            if not game_map.is_blocked(destination_x, destination_y):
+                target = get_blocking_entities_at_location(entities, destination_x, destination_y)
+
+                if target:
+                    print('You kick the ' + target.name + ' in the shins, much to its annoyance!')
+                else:
+                    player.move(dx, dy)
+                    fov_recompute = True
+
+                game_state = GameStates.ENEMY_TURN
 
         if exit:
             return True
 
         if fullscreen:
             tcod.console_set_fullscreen(not tcod.console_is_fullscreen())
+
+        # Enemies turn
+        if game_state == GameStates.ENEMY_TURN:
+            for entity in entities:
+                if entity != player:
+                    print('The ' + entity.name + ' ponders the meaning of its existence.')
+
+            game_state = GameStates.PLAYERS_TURN
 
 
 if __name__ == '__main__':
