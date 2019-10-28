@@ -15,6 +15,7 @@ def handle_keys(key):
     # Toggles fullscreen with alt+enter
     if key.vk == tcod.KEY_ENTER and key.lalt:
         return {'fullscreen': True}
+
     # Exits game
     elif key.vk == tcod.KEY_ESCAPE:
         return {'exit': True}
