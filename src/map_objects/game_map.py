@@ -1,6 +1,6 @@
 from random import randint
-from map_objects.tile import Tile
-from map_objects.rectangle import Rectangle
+from src.map_objects.tile import Tile
+from src.map_objects.rectangle import Rectangle
 
 
 class GameMap:
