@@ -1,5 +1,7 @@
 import tcod
 
+from components.ai import BasicMonster
+from components.fighter import Fighter
 from entity import Entity, get_blocking_entities_at_location
 from fov_functions import initialize_fov, recompute_fov
 from game_states import GameStates
@@ -41,7 +43,8 @@ def main():
     game_title = 'BeefRogue 2019.0.1'
 
     # Load player
-    player = Entity(0, 0, '@', tcod.white, 'Player', blocks=True)
+    fighter_component = Fighter(hp=30, defense=2, power=5)
+    player = Entity(0, 0, '@', tcod.white, 'Player', blocks=True, fighter=fighter_component)
     entities = [player]
 
     # Sets font
@@ -115,8 +118,8 @@ def main():
         # Enemies turn
         if game_state == GameStates.ENEMY_TURN:
             for entity in entities:
-                if entity != player:
-                    print('The ' + entity.name + ' ponders the meaning of its existence.')
+                if entity.ai:
+                    entity.ai.take_turn(player, fov_map, game_map, entities)
 
             game_state = GameStates.PLAYERS_TURN
 
