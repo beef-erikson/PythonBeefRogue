@@ -1,10 +1,10 @@
 import tcod
 from random import randint
 
-from components.ai import BasicMonster
-from components.fighter import Fighter
-from entity import Entity
-from render_functions import RenderOrder
+from src.components.ai import BasicMonster
+from src.components.fighter import Fighter
+from src.entity import Entity
+from src.render_functions import RenderOrder
 from src.map_objects.tile import Tile
 from src.map_objects.rectangle import Rectangle
 
