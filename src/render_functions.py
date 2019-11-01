@@ -2,6 +2,10 @@ import tcod
 
 from enum import Enum
 
+"""
+    Rendering (drawing) functions related to drawing things on the screen
+"""
+
 
 class RenderOrder(Enum):
     CORPSE = 1

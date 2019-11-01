@@ -1,5 +1,9 @@
 import tcod
 
+"""
+    Monster AI
+"""
+
 
 class BasicMonster:
     def take_turn(self, target, fov_map, game_map, entities):

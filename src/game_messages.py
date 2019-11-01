@@ -1,6 +1,10 @@
 import tcod
 import textwrap
 
+"""
+    Handles the messaging log that appears at the bottom of the screen.
+"""
+
 
 class Message:
     def __init__(self, text, color=tcod.white):

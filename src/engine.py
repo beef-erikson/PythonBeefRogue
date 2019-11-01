@@ -11,6 +11,10 @@ from src.input_handlers import handle_keys
 from src.render_functions import clear_all, render_all, RenderOrder
 from src.map_objects.game_map import GameMap
 
+"""
+       Main file where game parameters and game loop resides
+"""
+
 
 def main():
     # Screen variables

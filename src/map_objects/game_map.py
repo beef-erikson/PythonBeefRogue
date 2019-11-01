@@ -8,6 +8,10 @@ from src.render_functions import RenderOrder
 from src.map_objects.tile import Tile
 from src.map_objects.rectangle import Rectangle
 
+"""
+    Handles functions related to creating the game map
+"""
+
 
 class GameMap:
     def __init__(self, width, height):

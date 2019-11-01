@@ -2,6 +2,10 @@ import tcod
 
 from src.game_messages import Message
 
+"""
+    Fighter class stats and abilities
+"""
+
 
 class Fighter:
     def __init__(self, hp, defense, power):

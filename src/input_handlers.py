@@ -1,5 +1,9 @@
 import tcod
 
+"""
+    Handles keyboard functions and controls - both numpad and vim-like movement layouts
+"""
+
 
 def handle_keys(key):
     key_char = chr(key.c)

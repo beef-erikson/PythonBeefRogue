@@ -4,6 +4,10 @@ from src.game_messages import Message
 from src.game_states import GameStates
 from src.render_functions import RenderOrder
 
+"""
+    Death functions! Pretty self explanatory
+"""
+
 
 def kill_player(player):
     player.char = '%'

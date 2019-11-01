@@ -1,3 +1,8 @@
+"""
+Support for rectangles (for collision purposes mostly)
+"""
+
+
 class Rectangle:
     def __init__(self, x, y, w, h):
         self.x1 = x

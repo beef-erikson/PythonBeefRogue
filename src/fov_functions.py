@@ -1,5 +1,9 @@
 import tcod
 
+"""
+    Handles field of view functions
+"""
+
 
 # Initializes field of view for the given map
 def initialize_fov(game_map):
