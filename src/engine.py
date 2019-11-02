@@ -1,7 +1,7 @@
 import tcod
 
-from src.components.ai import BasicMonster
 from src.components.fighter import Fighter
+from src.components.inventory import Inventory
 from src.death_functions import kill_monster, kill_player
 from src.entity import Entity, get_blocking_entities_at_location
 from src.fov_functions import initialize_fov, recompute_fov
@@ -45,8 +45,9 @@ def main():
     fov_light_walls = True
     fov_radius = 10
 
-    # Monster variables
+    # Monster and item variables
     max_monsters_per_room = 3
+    max_items_per_room = 2
 
     # Dungeon colors
     colors = {
@@ -58,10 +59,11 @@ def main():
 
     game_title = 'BeefRogue 2019.0.1'
 
-    # Load player
+    # Load player and inventory
     fighter_component = Fighter(hp=30, defense=2, power=5)
+    inventory_component = Inventory(26)
     player = Entity(0, 0, '@', tcod.white, 'Player', blocks=True, render_order=RenderOrder.ACTOR,
-                    fighter=fighter_component)
+                    fighter=fighter_component, inventory=inventory_component)
     entities = [player]
 
     # Sets font
@@ -75,7 +77,7 @@ def main():
     # Initializes game map
     game_map = GameMap(map_width, map_height)
     game_map.make_map(max_rooms, room_min_size, room_max_size, map_width, map_height, player,
-                      entities, max_monsters_per_room)
+                      entities, max_monsters_per_room, max_items_per_room)
 
     # Field of view variables
     fov_recompute = True        # We only need to recompute when character moves
@@ -112,6 +114,7 @@ def main():
         action = handle_keys(key)
 
         move = action.get('move')
+        pickup = action.get('pickup')
         exit = action.get('exit')
         fullscreen = action.get('fullscreen')
 

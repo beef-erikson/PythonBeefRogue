@@ -26,6 +26,10 @@ def handle_keys(key):
     elif key_char == 'n' or key.vk == tcod.KEY_KP3:
         return {'move': (1, 1)}
 
+    # Pick up items key
+    if key_char == 'g':
+        return {'pickup': True}
+
     # Toggles fullscreen with alt+enter
     if key.vk == tcod.KEY_ENTER and key.lalt:
         return {'fullscreen': True}
