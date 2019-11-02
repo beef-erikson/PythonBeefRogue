@@ -5,6 +5,7 @@ from src.components.ai import BasicMonster
 from src.components.fighter import Fighter
 from src.components.item import Item
 from src.entity import Entity
+from src.item_functions import heal
 from src.render_functions import RenderOrder
 from src.map_objects.tile import Tile
 from src.map_objects.rectangle import Rectangle
@@ -132,7 +133,8 @@ class GameMap:
             y = randint(room.y1 + 1, room.y2 - 1)
 
             if not any([entity for entity in entities if entity.x == x and entity.y == y]):
-                item_component = Item()
+                # Healing potion (heals 4 damage)
+                item_component = Item(use_function=heal, amount=4)
                 item = Entity(x, y, '!', tcod.violet, 'Healing Potion', render_order=RenderOrder.ITEM,
                               item=item_component)
 

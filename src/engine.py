@@ -5,7 +5,7 @@ from src.components.inventory import Inventory
 from src.death_functions import kill_monster, kill_player
 from src.entity import Entity, get_blocking_entities_at_location
 from src.fov_functions import initialize_fov, recompute_fov
-from src.game_messages import MessageLog
+from src.game_messages import Message, MessageLog
 from src.game_states import GameStates
 from src.input_handlers import handle_keys
 from src.render_functions import clear_all, render_all, RenderOrder
@@ -67,7 +67,7 @@ def main():
     entities = [player]
 
     # Sets font
-    tcod.console_set_custom_font('arial10x10.png', tcod.FONT_TYPE_GREYSCALE | tcod.FONT_LAYOUT_TCOD)
+    tcod.console_set_custom_font('arial12x12.png', tcod.FONT_TYPE_GREYSCALE | tcod.FONT_LAYOUT_TCOD)
 
     # Sets window parameters
     tcod.console_init_root(screen_width, screen_height, game_title, False, tcod.RENDERER_OPENGL2, vsync=True)
@@ -93,6 +93,9 @@ def main():
     # Player goes first
     game_state = GameStates.PLAYERS_TURN
 
+    # Save previous game state (for inventory support)
+    previous_game_state = game_state
+
     # Main game loop
     while not tcod.console_is_window_closed():
         tcod.sys_check_for_event(tcod.EVENT_KEY_PRESS | tcod.EVENT_MOUSE, key, mouse)
@@ -103,7 +106,7 @@ def main():
 
         # Draws player and sets recompute to false until next player move
         render_all(con, panel, entities, player, game_map, fov_map, fov_recompute, message_log, screen_width,
-                   screen_height, bar_width, panel_height, panel_y, mouse, colors)
+                   screen_height, bar_width, panel_height, panel_y, mouse, colors, game_state)
         fov_recompute = False
         tcod.console_flush()
 
@@ -111,17 +114,21 @@ def main():
         clear_all(con, entities)
 
         # Keyboard input
-        action = handle_keys(key)
+        action = handle_keys(key, game_state)
 
+        # Action handlers
         move = action.get('move')
         pickup = action.get('pickup')
+        show_inventory = action.get('show_inventory')
+        drop_inventory = action.get('drop_inventory')
+        inventory_index = action.get('inventory_index')
         exit = action.get('exit')
         fullscreen = action.get('fullscreen')
 
         # List to hold for result of battles
         player_turn_results = []
 
-        # Player turn
+        # Player turn and handling of item pickups
         if move and game_state == GameStates.PLAYERS_TURN:
             dx, dy = move
             destination_x = player.x + dx
@@ -139,22 +146,61 @@ def main():
 
                 game_state = GameStates.ENEMY_TURN
 
-        # Quit game on close
+        # Pickup items
+        elif pickup and game_state == GameStates.PLAYERS_TURN:
+            for entity in entities:
+                if entity.item and entity.x == player.x and entity.y == player.y:
+                    pickup_results = player.inventory.add_item(entity)
+                    player_turn_results.extend(pickup_results)
+
+                    break
+            else:
+                message_log.add_message(Message('There is nothing here to pick up.', tcod.yellow))
+
+        # Show inventory
+        if show_inventory:
+            previous_game_state = game_state
+            game_state = GameStates.SHOW_INVENTORY
+
+        # Drops item from inventory
+        if drop_inventory:
+            previous_game_state = game_state
+            game_state = GameStates.DROP_INVENTORY
+
+        # Use or drop item (only when in inventory game state and not dead)
+        if inventory_index is not None and previous_game_state != GameStates.PLAYER_DEAD and inventory_index < len(
+                player.inventory.items):
+            item = player.inventory.items[inventory_index]
+
+            if game_state == GameStates.SHOW_INVENTORY:
+                player_turn_results.extend(player.inventory.use(item))
+            elif game_state == GameStates.DROP_INVENTORY:
+                player_turn_results.extend(player.inventory.drop_item(item))
+
+        # Reverts back to previous game state while viewing inventory; otherwise, closes game
         if exit:
-            return True
+            if game_state in (GameStates.SHOW_INVENTORY, GameStates.DROP_INVENTORY):
+                game_state = previous_game_state
+            else:
+                return True
 
         # Toggles fullscreen
         if fullscreen:
             tcod.console_set_fullscreen(not tcod.console_is_fullscreen())
 
-        # Iterates results of battle
+        # Iterates results after turn
         for player_turn_result in player_turn_results:
             message = player_turn_result.get('message')
             dead_entity = player_turn_result.get('dead')
+            item_added = player_turn_result.get('item_added')
+            item_consumed = player_turn_result.get('consumed')
+            item_dropped = player_turn_result.get('item_dropped')
 
+            # Displays supplied message
             if message:
                 message_log.add_message(message)
 
+            # Player or monster has died
             if dead_entity:
                 if dead_entity == player:
                     message, game_state = kill_player(dead_entity)
@@ -162,6 +208,22 @@ def main():
                     message = kill_monster(dead_entity)
 
                 message_log.add_message(message)
+
+            # Item was added to inventory
+            if item_added:
+                entities.remove(item_added)
+
+                game_state = GameStates.ENEMY_TURN
+
+            # Item was used
+            if item_consumed:
+                game_state = GameStates.ENEMY_TURN
+
+            # Item was dropped
+            if item_dropped:
+                entities.append(item_dropped)
+
+                game_state = GameStates.ENEMY_TURN
 
         # Enemies turn
         if game_state == GameStates.ENEMY_TURN:

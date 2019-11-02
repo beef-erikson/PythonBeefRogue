@@ -1,11 +1,44 @@
 import tcod
 
+from src.game_states import GameStates
+
 """
     Handles keyboard functions and controls - both numpad and vim-like movement layouts
+    Keys are handled via GameState
 """
 
 
-def handle_keys(key):
+# Returns functions of keys based on GameState
+def handle_keys(key, game_state):
+    if game_state == GameStates.PLAYERS_TURN:
+        return handle_player_turn_keys(key)
+    elif game_state == GameStates.PLAYER_DEAD:
+        return handle_player_dead_keys(key)
+    elif game_state in (GameStates.SHOW_INVENTORY, GameStates.DROP_INVENTORY):
+        return handle_inventory_keys(key)
+
+    # No key press
+    return {}
+
+
+# Inventory keys (while in inventory)
+def handle_inventory_keys(key):
+    index = key.c - ord('a')
+
+    if index >= 0:
+        return {'inventory_index': index}
+
+    if key.vk == tcod.KEY_ENTER and key.lalt:
+        return {'fullscreen': True}
+    elif key.vk == tcod.KEY_ESCAPE:
+        return {'exit': True}
+
+    # No key was hit
+    return {}
+
+
+# Handles game-play keys
+def handle_player_turn_keys(key):
     key_char = chr(key.c)
 
     # Movement keys                                                                             # vim key layout
@@ -30,11 +63,35 @@ def handle_keys(key):
     if key_char == 'g':
         return {'pickup': True}
 
+    # Display inventory
+    elif key_char == 'i':
+        return {'show_inventory': True}
+
+    # Drops item from inventory
+    elif key_char == 'd':
+        return {'drop_inventory': True}
+
     # Toggles fullscreen with alt+enter
     if key.vk == tcod.KEY_ENTER and key.lalt:
         return {'fullscreen': True}
 
     # Exits game
+    elif key.vk == tcod.KEY_ESCAPE:
+        return {'exit': True}
+
+    # No key was pressed
+    return {}
+
+
+# Handles keys if player is dead
+def handle_player_dead_keys(key):
+    key_char = chr(key.c)
+
+    if key_char == 'i':
+        return {'show_inventory': True}
+
+    if key.vk == tcod.KEY_ENTER and key.lalt:
+        return {'fullscreen': True}
     elif key.vk == tcod.KEY_ESCAPE:
         return {'exit': True}
 

@@ -14,6 +14,7 @@ class Fighter:
         self.defense = defense
         self.power = power
 
+    # Taking damage functionality
     def take_damage(self, amount):
         results = []
 
@@ -24,6 +25,14 @@ class Fighter:
 
         return results
 
+    # Healing (via potion or other means)
+    def heal(self, amount):
+        self.hp += amount
+
+        if self.hp > self.max_hp:
+            self.hp = self.max_hp
+
+    # Standard attack
     def attack(self, target):
         results = []
 
