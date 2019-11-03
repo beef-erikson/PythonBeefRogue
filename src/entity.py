@@ -53,6 +53,10 @@ class Entity:
                 get_blocking_entities_at_location(entities, self.x + dx, self.y + dy)):
             self.move(dx, dy)
 
+    # Get distance between a entity and the player
+    def distance(self, x, y):
+        return math.sqrt((x - self.x) ** 2 + (y - self.y) ** 2)
+
     # Moves using the A* algorithm
     # noinspection DuplicatedCode
     def move_astar(self, target, entities, game_map):
