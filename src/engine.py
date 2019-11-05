@@ -1,90 +1,26 @@
 import tcod
 
-from src.components.fighter import Fighter
-from src.components.inventory import Inventory
+from src.components.menus import main_menu, message_box
 from src.death_functions import kill_monster, kill_player
-from src.entity import Entity, get_blocking_entities_at_location
+from src.entity import get_blocking_entities_at_location
 from src.fov_functions import initialize_fov, recompute_fov
-from src.game_messages import Message, MessageLog
+from src.game_messages import Message
 from src.game_states import GameStates
-from src.input_handlers import handle_keys, handle_mouse
-from src.render_functions import clear_all, render_all, RenderOrder
-from src.map_objects.game_map import GameMap
+from src.input_handlers import handle_keys, handle_main_menu, handle_mouse
+from src.loader_functions.data_loaders import load_game, save_game
+from src.loader_functions.initialize_new_game import get_game_constants, get_game_variables
+from src.render_functions import clear_all, render_all
 
 """
        Main file where game parameters and game loop resides
 """
 
 
-def main():
-    # Screen variables
-    screen_width = 80
-    screen_height = 50
-
-    # UI elements
-    bar_width = 20
-    panel_height = 7
-    panel_y = screen_height - panel_height
-
-    # Message bar elements
-    message_x = bar_width + 2
-    message_width = screen_width - bar_width - 2
-    message_height = panel_height - 1
-
-    # Map variables (5 free pixels at bottom for input)
-    map_width = 80
-    map_height = 43
-
-    # Room variables
-    room_max_size = 10
-    room_min_size = 6
-    max_rooms = 30
-
+# Logic of main game
+def play_game(player, entities, game_map, message_log, game_state, con, panel, constants):
     # Field of view variables
-    fov_algorithm = 0           # TODO There are other algorithms as well, check them
-    fov_light_walls = True
-    fov_radius = 10
-
-    # Monster and item variables
-    max_monsters_per_room = 3
-    max_items_per_room = 2
-
-    # Dungeon colors
-    colors = {
-        'dark_wall': tcod.Color(0, 0, 100),
-        'dark_ground': tcod.Color(50, 50, 150),
-        'light_wall': tcod.Color(130, 110, 50),
-        'light_ground': tcod.Color(200, 180, 50)
-    }
-
-    game_title = 'BeefRogue 2019.0.1'
-
-    # Load player and inventory
-    fighter_component = Fighter(hp=30, defense=2, power=5)
-    inventory_component = Inventory(26)
-    player = Entity(0, 0, '@', tcod.white, 'Player', blocks=True, render_order=RenderOrder.ACTOR,
-                    fighter=fighter_component, inventory=inventory_component)
-    entities = [player]
-
-    # Sets font
-    tcod.console_set_custom_font('arial12x12.png', tcod.FONT_TYPE_GREYSCALE | tcod.FONT_LAYOUT_TCOD)
-
-    # Sets window parameters
-    tcod.console_init_root(screen_width, screen_height, game_title, False, tcod.RENDERER_OPENGL2, vsync=True)
-    con = tcod.console_new(screen_width, screen_height)
-    panel = tcod.console_new(screen_width, panel_height)
-
-    # Initializes game map
-    game_map = GameMap(map_width, map_height)
-    game_map.make_map(max_rooms, room_min_size, room_max_size, map_width, map_height, player,
-                      entities, max_monsters_per_room, max_items_per_room)
-
-    # Field of view variables
-    fov_recompute = True        # We only need to recompute when character moves
+    fov_recompute = True                    # We only need to recompute when character moves
     fov_map = initialize_fov(game_map)
-
-    # Message log (death, hits, etc)
-    message_log = MessageLog(message_x, message_width, message_height)
 
     # Variables for keyboard and mouse inputs
     key = tcod.Key()
@@ -105,11 +41,13 @@ def main():
 
         # Updates field of view if needed
         if fov_recompute:
-            recompute_fov(fov_map, player.x, player.y, fov_radius, fov_light_walls, fov_algorithm)
+            recompute_fov(fov_map, player.x, player.y, constants['fov_radius'], constants['fov_light_walls'],
+                          constants['fov_algorithm'])
 
         # Draws player and sets recompute to false until next player move
-        render_all(con, panel, entities, player, game_map, fov_map, fov_recompute, message_log, screen_width,
-                   screen_height, bar_width, panel_height, panel_y, mouse, colors, game_state)
+        render_all(con, panel, entities, player, game_map, fov_map, fov_recompute, message_log,
+                   constants['screen_width'], constants['screen_height'], constants['bar_width'],
+                   constants['panel_height'], constants['panel_y'], mouse, constants['colors'], game_state)
         fov_recompute = False
         tcod.console_flush()
 
@@ -196,13 +134,15 @@ def main():
             elif right_click:
                 player_turn_results.append({'targeting_cancelled': True})
 
-        # Reverts back to previous game state while viewing inventory; otherwise, closes game
+        # Reverts back to previous game state while viewing inventory; otherwise, closes and saves game
         if exit:
             if game_state in (GameStates.SHOW_INVENTORY, GameStates.DROP_INVENTORY):
                 game_state = previous_game_state
             elif game_state == GameStates.TARGETING:
                 player_turn_results.append({'targeting_cancelled': True})
             else:
+                save_game(player, entities, game_map, message_log, game_state)
+
                 return True
 
         # Toggles fullscreen
@@ -223,12 +163,6 @@ def main():
             if message:
                 message_log.add_message(message)
 
-            # Targeting was cancelled, revert to previous game state
-            if targeting_cancelled:
-                game_state = previous_game_state
-
-                message_log.add_message(Message('Targeting cancelled.'))
-
             # Player or monster has died
             if dead_entity:
                 if dead_entity == player:
@@ -248,6 +182,12 @@ def main():
             if item_consumed:
                 game_state = GameStates.ENEMY_TURN
 
+            # Item was dropped
+            if item_dropped:
+                entities.append(item_dropped)
+
+                game_state = GameStates.ENEMY_TURN
+
             # Targeting is activated, switch to targeting mode
             if targeting:
                 previous_game_state = GameStates.PLAYERS_TURN
@@ -257,11 +197,11 @@ def main():
 
                 message_log.add_message(targeting_item.item.targeting_message)
 
-            # Item was dropped
-            if item_dropped:
-                entities.append(item_dropped)
+            # Targeting was cancelled, revert to previous game state
+            if targeting_cancelled:
+                game_state = previous_game_state
 
-                game_state = GameStates.ENEMY_TURN
+                message_log.add_message(Message('Targeting cancelled.'))
 
         # Enemies turn
         if game_state == GameStates.ENEMY_TURN:
@@ -291,6 +231,89 @@ def main():
                         break
             else:
                 game_state = GameStates.PLAYERS_TURN
+
+
+def main():
+    # Grabs all the various game constants
+    constants = get_game_constants()
+
+    # Sets font
+    tcod.console_set_custom_font('arial12x12.png', tcod.FONT_TYPE_GREYSCALE | tcod.FONT_LAYOUT_TCOD)
+
+    # Sets window parameters
+    tcod.console_init_root(constants['screen_width'], constants['screen_height'], constants['game_title'],
+                           False, tcod.RENDERER_OPENGL2, vsync=True)
+    con = tcod.console_new(constants['screen_width'], constants['screen_height'])
+    panel = tcod.console_new(constants['screen_width'], constants['panel_height'])
+
+    # Sets saved game parameters to none
+    player = None
+    entities = []
+    game_map = None
+    message_log = None
+    game_state = None
+
+    # Menu and Load triggers
+    show_main_menu = True
+    show_load_error_message = False
+
+    # Load main menu background
+    main_menu_background_image = tcod.image_load('menu_background.png')
+
+    # Inputs
+    key = tcod.Key()
+    mouse = tcod.Mouse()
+
+    #
+    # MAIN GAME LOOP
+    #
+    while not tcod.console_is_window_closed():
+        # Check for events
+        tcod.sys_check_for_event(tcod.EVENT_KEY_PRESS | tcod.EVENT_MOUSE, key, mouse)
+
+        # Main menu
+        if show_main_menu:
+            main_menu(con, main_menu_background_image, constants['screen_width'], constants['screen_height'])
+
+            if show_load_error_message:
+                message_box(con, 'No save game to load', 50, constants['screen_width'], constants['screen_height'])
+
+            tcod.console_flush()
+
+            action = handle_main_menu(key)
+
+            # Actions for main menu
+            new_game = action.get('new_game')
+            load_saved_game = action.get('load_game')
+            exit_game = action.get('exit')
+
+            if show_load_error_message and (new_game or load_saved_game or exit_game):
+                show_load_error_message = False
+
+            # Starts a new game
+            elif new_game:
+                # Loads in player, inventory, map, and other such variables then sets turn to player
+                player, entities, game_map, message_log, game_state = get_game_variables(constants)
+                game_state = GameStates.PLAYERS_TURN
+
+                show_main_menu = False
+
+            # Loads a saved game
+            elif load_saved_game:
+                try:
+                    player, entities, game_map, message_log, game_state = load_game()
+                    show_main_menu = False
+                except FileNotFoundError:
+                    show_load_error_message = True
+
+            # Exits game
+            elif exit_game:
+                break
+        else:
+            tcod.console_clear(con)
+            play_game(player, entities, game_map, message_log, game_state, con, panel, constants)
+
+            show_main_menu = True
 
 
 if __name__ == '__main__':

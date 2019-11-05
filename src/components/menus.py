@@ -33,7 +33,12 @@ def menu(con, header, options, width, screen_width, screen_height):
     # blit contents of window to the root console
     x = int(screen_width / 2 - width / 2)
     y = int(screen_height / 2 - height / 2)
-    tcod.console_blit(window, 0, 0, width, height, 0, x, y, 1.0, 0.7)
+
+    # If header is empty string, don't draw that line
+    if header == '':
+        tcod.console_blit(window, 0, 1, width, height, 0, x, y, 1.0, 0.5)
+    else:
+        tcod.console_blit(window, 0, 0, width, height, 0, x, y, 1.0, 0.5)
 
 
 # Inventory menu that lists each item as an option
@@ -44,3 +49,21 @@ def inventory_menu(con, header, inventory, inventory_width, screen_width, screen
         options = [item.name for item in inventory.items]
 
     menu(con, header, options, inventory_width, screen_width, screen_height)
+
+
+# Main menu (loads at start of game)
+def main_menu(con, background_image, screen_width, screen_height):
+    tcod.image_blit_2x(background_image, 0, 0, 0, 0, 0)
+
+    tcod.console_set_default_foreground(0, tcod.yellow)
+    tcod.console_print_ex(0, int(screen_width / 2), int(screen_height / 2) - 4, tcod.BKGND_NONE, tcod.CENTER,
+                          '<Insert better title than BEEF ROGUE>')
+    tcod.console_print_ex(0, int(screen_width / 2), int(screen_height - 2), tcod.BKGND_NONE, tcod.CENTER,
+                          'Beef Erikson Studios - v2019.0.2')
+
+    menu(con, '', ['New Game', 'Continue', 'Save and Quit'], 24, screen_width, screen_height)
+
+
+# Empty message box menu item
+def message_box(con, header, width, screen_width, screen_height):
+    menu(con, header, [], width, screen_width, screen_height)

@@ -35,7 +35,22 @@ def handle_inventory_keys(key):
     elif key.vk == tcod.KEY_ESCAPE:
         return {'exit': True}
 
-    # No key was hit
+    # No key press
+    return {}
+
+
+# Main menu keys
+def handle_main_menu(key):
+    key_char = chr(key.c)
+
+    if key_char == 'a':
+        return {'new_game': True}
+    elif key_char == 'b':
+        return {'load_game': True}
+    elif key_char == 'c' or key.vk == tcod.KEY_ESCAPE:
+        return {'exit': True}
+
+    # No key press
     return {}
 
 

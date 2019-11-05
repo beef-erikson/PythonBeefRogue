@@ -3,7 +3,7 @@ import tcod
 from enum import Enum
 
 from src.game_states import GameStates
-from src.menus import inventory_menu
+from src.components.menus import inventory_menu
 
 """
     Rendering (drawing) functions related to drawing things on the screen
