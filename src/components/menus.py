@@ -57,7 +57,7 @@ def main_menu(con, background_image, screen_width, screen_height):
 
     tcod.console_set_default_foreground(0, tcod.yellow)
     tcod.console_print_ex(0, int(screen_width / 2), int(screen_height / 2) - 4, tcod.BKGND_NONE, tcod.CENTER,
-                          '<Insert better title than BEEF ROGUE>')
+                          'YARG - Yet Another Roguelike Game')
     tcod.console_print_ex(0, int(screen_width / 2), int(screen_height - 2), tcod.BKGND_NONE, tcod.CENTER,
                           'Beef Erikson Studios - v2019.0.2')
 

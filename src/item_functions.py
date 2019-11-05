@@ -61,7 +61,7 @@ def cast_lightning(*args, **kwargs):
     return results
 
 
-# Scroll of Fireball - hits a target enemy with a blast radius
+# Scroll of Fireball - hits a target area for 12 damage to all with a blast radius of 3
 def cast_fireball(*args, **kwargs):
     entities = kwargs.get('entities')
     fov_map = kwargs.get('fov_map')
