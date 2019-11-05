@@ -1,5 +1,7 @@
 # YARG (Yet Another Roguelike Game)
-##Version 2019.0.2 (November 5, 2019)
+
+
+## Version 2019.0.2 (November 5, 2019)
 - Menu added, both at start and by hitting escape.
 - Several items are now implemented.
    - Healing Potion, restores 4 HP.
@@ -14,7 +16,7 @@
 - GUI added with messaging and health display.
 - Mouseover on targets displays what it is.
 
-##Version 2019.0.1 (October 28th, 2019)
+## Version 2019.0.1 (October 28th, 2019)
 - Procedural generation of dungeon complete
 - Enemies and Player added
 - Basic combat system implemented
