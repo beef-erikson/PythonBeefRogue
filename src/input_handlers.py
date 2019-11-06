@@ -18,11 +18,16 @@ def handle_keys(key, game_state):
         return handle_targeting_keys(key)
     elif game_state in (GameStates.SHOW_INVENTORY, GameStates.DROP_INVENTORY):
         return handle_inventory_keys(key)
+    elif game_state == GameStates.LEVEL_UP:
+        return handle_level_up_menu(key)
+    elif game_state == GameStates.CHARACTER_SCREEN:
+        return handle_character_screen(key)
 
     # No key press
     return {}
 
 
+# TODO Make inventory items mouse clickable
 # Inventory keys (while in inventory)
 def handle_inventory_keys(key):
     index = key.c - ord('a')
@@ -39,6 +44,33 @@ def handle_inventory_keys(key):
     return {}
 
 
+# TODO Make level up menu mouse clickable
+# Level up menu keys (when player levels)
+def handle_level_up_menu(key):
+    if key:
+        key_char = chr(key.c)
+
+        if key_char == 'a':
+            return {'level_up': 'hp'}
+        elif key_char == 'b':
+            return {'level_up': 'str'}
+        elif key_char == 'c':
+            return {'level_up': 'def'}
+
+    # No keys hit
+    return {}
+
+
+# Character screen keys, escape exits menu
+def handle_character_screen(key):
+    if key.vk == tcod.KEY_ESCAPE or chr(key.c) == 'c':
+        return {'exit': True}
+
+    # No key hit
+    return {}
+
+
+# TODO Make these mouse clickable
 # Main menu keys
 def handle_main_menu(key):
     key_char = chr(key.c)
@@ -66,6 +98,7 @@ def handle_targeting_keys(key):
 def handle_player_turn_keys(key):
     key_char = chr(key.c)
 
+    # TODO - make moving mouse-based as well (i.e. clicking on tile moves you there)
     # Movement keys                                                                             # vim key layout
     if key.vk == tcod.KEY_UP or key_char == 'k' or key.vk == tcod.KEY_KP8:                      # yku
         return {'move': (0, -1)}                                                                # h l
@@ -83,6 +116,8 @@ def handle_player_turn_keys(key):
         return {'move': (-1, 1)}
     elif key_char == 'n' or key.vk == tcod.KEY_KP3:
         return {'move': (1, 1)}
+    elif key_char == 'z' or key.vk == tcod.KEY_KP0:
+        return {'wait': True}
 
     # Pick up items key
     if key_char == 'g':
@@ -95,6 +130,15 @@ def handle_player_turn_keys(key):
     # Drops item from inventory
     elif key_char == 'd':
         return {'drop_inventory': True}
+
+    # TODO Make player go back upstairs
+    # Goes down stairs
+    elif key.vk == tcod.KEY_ENTER or key.shift and key_char == '.':   # > key doesn't work, hack to make it work.
+        return {'take_stairs_down': True}
+
+    # Access character screen
+    elif key_char == 'c':
+        return {'show_character_screen': True}
 
     # Toggles fullscreen with alt+enter
     if key.vk == tcod.KEY_ENTER and key.lalt:

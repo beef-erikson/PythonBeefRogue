@@ -7,6 +7,7 @@ from src.components.item import Item
 from src.entity import Entity
 from src.game_messages import Message
 from src.item_functions import cast_confuse, cast_fireball, cast_lightning, heal
+from src.map_objects.stairs import Stairs
 from src.render_functions import RenderOrder
 from src.map_objects.tile import Tile
 from src.map_objects.rectangle import Rectangle
@@ -18,10 +19,11 @@ from src.map_objects.rectangle import Rectangle
 
 
 class GameMap:
-    def __init__(self, width, height):
+    def __init__(self, width, height, dungeon_level=1):
         self.width = width
         self.height = height
         self.tiles = self.initialize_tiles()
+        self.dungeon_level = dungeon_level
 
     # Initializes the dungeon
     def initialize_tiles(self):
@@ -33,6 +35,9 @@ class GameMap:
                  entities, max_monsters_per_room, max_items_per_room):
         rooms = []
         num_rooms = 0
+
+        center_of_last_room_x = None
+        center_of_last_room_y = None
 
         for r in range(max_rooms):
             # Random width and height
@@ -65,6 +70,10 @@ class GameMap:
                     # Center coords of previous room
                     (prev_x, prev_y) = rooms[num_rooms - 1].center()
 
+                    # Used for placement of stairs
+                    center_of_last_room_x = new_x
+                    center_of_last_room_y = new_y
+
                     # Flip coin
                     if randint(0, 1) == 1:
                         # First move horizontally, then vertically
@@ -81,6 +90,12 @@ class GameMap:
                 # Append the new room to the list
                 rooms.append(new_room)
                 num_rooms += 1
+
+        # Creates stairs to go down to next level
+        stairs_component = Stairs(self.dungeon_level + 1)
+        down_stairs = Entity(center_of_last_room_x, center_of_last_room_y, '>', tcod.white, 'Stairs',
+                             render_order=RenderOrder.STAIRS, stairs=stairs_component)
+        entities.append(down_stairs)
 
     # Creates a room
     def create_room(self, room):
@@ -111,16 +126,19 @@ class GameMap:
             x = randint(room.x1 + 1, room.x2 - 1)
             y = randint(room.y1 + 1, room.y2 - 1)
 
+            # TODO - add more monsters as you go further down in levels
             # Checks if location to place monster is empty
             if not any([entity for entity in entities if entity.x == x and entity.y == y]):
+                # Orc
                 if randint(0, 100) < 80:
-                    fighter_component = Fighter(hp=10, defense=0, power=3)
+                    fighter_component = Fighter(hp=10, defense=0, power=3, xp=35)
                     ai_component = BasicMonster()
 
                     monster = Entity(x, y, 'o', tcod.desaturated_green, 'Orc', blocks=True,
                                      render_order=RenderOrder.ACTOR, fighter=fighter_component, ai=ai_component)
+                # Troll
                 else:
-                    fighter_component = Fighter(hp=16, defense=1, power=4)
+                    fighter_component = Fighter(hp=16, defense=1, power=4, xp=100)
                     ai_component = BasicMonster()
 
                     monster = Entity(x, y, 'T', tcod.darker_green, 'Troll', blocks=True,
@@ -171,3 +189,23 @@ class GameMap:
             return True
 
         return False
+
+    # TODO Add in going up a floor
+    # Goes down a floor in the dungeon, creating a new floor
+    def next_floor(self, player, message_log, constants):
+        self.dungeon_level += 1
+        entities = [player]
+
+        # Creates a new map
+        self.tiles = self.initialize_tiles()
+        self.make_map(constants['max_rooms'], constants['room_min_size'], constants['room_max_size'],
+                      constants['map_width'], constants['map_height'], player, entities,
+                      constants['max_monsters_per_room'], constants['max_items_per_room'])
+
+        # TODO note when we add stairs back up, we need to make sure that player doesn't gain health again going down
+        # Gives player half of their max hp back
+        player.fighter.heal(player.fighter.max_hp // 2)
+        message_log.add_message(Message('You take a moment to rest heading down the stairs, restoring some health',
+                                        tcod.violet))
+
+        return entities

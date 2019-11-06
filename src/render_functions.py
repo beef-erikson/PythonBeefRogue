@@ -3,7 +3,7 @@ import tcod
 from enum import Enum
 
 from src.game_states import GameStates
-from src.components.menus import inventory_menu
+from src.components.menus import character_screen, inventory_menu, level_up_menu
 
 """
     Rendering (drawing) functions related to drawing things on the screen
@@ -11,9 +11,10 @@ from src.components.menus import inventory_menu
 
 
 class RenderOrder(Enum):
-    CORPSE = 1
-    ITEM = 2
-    ACTOR = 3
+    STAIRS = 1
+    CORPSE = 2
+    ITEM = 3
+    ACTOR = 4
 
 
 # Displays name of mob on mouseover
@@ -69,7 +70,7 @@ def render_all(con, panel, entities, player, game_map, fov_map, fov_recompute, m
     entities_in_render_order = sorted(entities, key=lambda x: x.render_order.value)
 
     for entity in entities_in_render_order:
-        draw_entity(con, entity, fov_map)
+        draw_entity(con, entity, fov_map, game_map)
 
     # Draws player health
     tcod.console_set_default_foreground(con, tcod.white)
@@ -89,8 +90,11 @@ def render_all(con, panel, entities, player, game_map, fov_map, fov_recompute, m
         tcod.console_print_ex(panel, message_log.x, y, tcod.BKGND_NONE, tcod.LEFT, message.text)
         y += 1
 
+    # Renders the HP bar and current dungeon level
     render_bar(panel, 1, 1, bar_width, 'HP', player.fighter.hp, player.fighter.max_hp,
                tcod.light_red, tcod.darker_red)
+    tcod.console_print_ex(panel, 1, 3, tcod.BKGND_NONE, tcod.LEFT, 'Dungeon level: {0}'.format(
+        game_map.dungeon_level))
 
     # Displays entity name on mouse-over
     tcod.console_set_default_foreground(panel, tcod.light_gray)
@@ -108,6 +112,14 @@ def render_all(con, panel, entities, player, game_map, fov_map, fov_recompute, m
 
         inventory_menu(con, inventory_title, player.inventory, 50, screen_width, screen_height)
 
+    # Displays level up menu
+    elif game_state == GameStates.LEVEL_UP:
+        level_up_menu(con, 'Level up! Choose a stat to raise:\n', player, 40, screen_width, screen_height)
+
+    # Displays character screen
+    elif game_state == GameStates.CHARACTER_SCREEN:
+        character_screen(player, 30, 11, screen_width, screen_height)
+
 
 # Runs clear_entity on all entities
 def clear_all(con, entities):
@@ -116,8 +128,9 @@ def clear_all(con, entities):
 
 
 # Draws the entity with its properties
-def draw_entity(con, entity, fov_map):
-    if tcod.map_is_in_fov(fov_map, entity.x, entity.y):
+def draw_entity(con, entity, fov_map, game_map):
+    # Show what is in FOV as well as stairs, if discovered previously
+    if tcod.map_is_in_fov(fov_map, entity.x, entity.y) or (entity.stairs and game_map.tiles[entity.x][entity.y].explored):
         tcod.console_set_default_foreground(con, entity.color)
         tcod.console_put_char(con, entity.x, entity.y, entity.char, tcod.BKGND_NONE)
 

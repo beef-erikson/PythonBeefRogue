@@ -11,6 +11,8 @@ from src.loader_functions.data_loaders import load_game, save_game
 from src.loader_functions.initialize_new_game import get_game_constants, get_game_variables
 from src.render_functions import clear_all, render_all
 
+# TODO add message of what is at player's feet
+
 """
        Main file where game parameters and game loop resides
 """
@@ -58,12 +60,18 @@ def play_game(player, entities, game_map, message_log, game_state, con, panel, c
         action = handle_keys(key, game_state)
         mouse_action = handle_mouse(mouse)
 
+        # TODO add in help menu that lists commands, available both through menu and by hitting '?'
         # Action handlers
         move = action.get('move')
+        wait = action.get('wait')
         pickup = action.get('pickup')
         show_inventory = action.get('show_inventory')
         drop_inventory = action.get('drop_inventory')
         inventory_index = action.get('inventory_index')
+        level_up = action.get('level_up')
+        show_character_screen = action.get('show_character_screen')
+        # TODO add in take_stairs_up
+        take_stairs_down = action.get('take_stairs_down')
         exit = action.get('exit')
         fullscreen = action.get('fullscreen')
 
@@ -91,6 +99,11 @@ def play_game(player, entities, game_map, message_log, game_state, con, panel, c
                     fov_recompute = True
 
                 game_state = GameStates.ENEMY_TURN
+
+        # Player waits for a turn (and does nothing)
+        elif wait and game_state == GameStates.PLAYERS_TURN:
+            message_log.add_message(Message('You twiddle your thumbs for a turn.', tcod.turquoise))
+            game_state = GameStates.ENEMY_TURN
 
         # Pickup items
         elif pickup and game_state == GameStates.PLAYERS_TURN:
@@ -123,6 +136,37 @@ def play_game(player, entities, game_map, message_log, game_state, con, panel, c
             elif game_state == GameStates.DROP_INVENTORY:
                 player_turn_results.extend(player.inventory.drop_item(item))
 
+        # Leveling up
+        if level_up:
+            if level_up == 'hp':
+                player.fighter.max_hp += 20
+                player.fighter.hp += 20
+            elif level_up == 'str':
+                player.fighter.power += 1
+            elif level_up == 'def':
+                player.fighter.defense += 1
+
+            game_state = previous_game_state
+
+        # Character screen, switches to appropriate game state
+        if show_character_screen:
+            previous_game_state = game_state
+            game_state = GameStates.CHARACTER_SCREEN
+
+        # TODO will likely need to add a stairs_down and stairs_up to entities when making going up floors
+        # Goes down a flight of stairs, going to a new map
+        if take_stairs_down and game_state == GameStates.PLAYERS_TURN:
+            for entity in entities:
+                if entity.stairs and entity.x == player.x and entity.y == player.y:
+                    entities = game_map.next_floor(player, message_log, constants)
+                    fov_map = initialize_fov(game_map)
+                    fov_recompute = True
+                    tcod.console_clear(con)
+
+                    break
+            else:
+                message_log.add_message(Message('There are no stairs here.', tcod.yellow))
+
         # Targeting mode is active - left mouse click sets target, right mouse click cancels
         if game_state == GameStates.TARGETING:
             if left_click:
@@ -136,7 +180,7 @@ def play_game(player, entities, game_map, message_log, game_state, con, panel, c
 
         # Reverts back to previous game state while viewing inventory; otherwise, closes and saves game
         if exit:
-            if game_state in (GameStates.SHOW_INVENTORY, GameStates.DROP_INVENTORY):
+            if game_state in (GameStates.SHOW_INVENTORY, GameStates.DROP_INVENTORY, GameStates.CHARACTER_SCREEN):
                 game_state = previous_game_state
             elif game_state == GameStates.TARGETING:
                 player_turn_results.append({'targeting_cancelled': True})
@@ -158,6 +202,7 @@ def play_game(player, entities, game_map, message_log, game_state, con, panel, c
             item_dropped = player_turn_result.get('item_dropped')
             targeting = player_turn_result.get('targeting')
             targeting_cancelled = player_turn_result.get('targeting_cancelled')
+            xp = player_turn_result.get('xp')
 
             # Displays supplied message
             if message:
@@ -202,6 +247,17 @@ def play_game(player, entities, game_map, message_log, game_state, con, panel, c
                 game_state = previous_game_state
 
                 message_log.add_message(Message('Targeting cancelled.'))
+
+            # Experience results
+            if xp:
+                leveled_up = player.level.add_xp(xp)
+                message_log.add_message(Message('You gain {0} experience points.'.format(xp)))
+
+                if leveled_up:
+                    message_log.add_message(Message('You have leveled up and reached level {0}!'.format(
+                        player.level.current_level), tcod.lighter_yellow))
+                    previous_game_state = game_state
+                    game_state = GameStates.LEVEL_UP
 
         # Enemies turn
         if game_state == GameStates.ENEMY_TURN:
