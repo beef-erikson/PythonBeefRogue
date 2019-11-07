@@ -341,6 +341,7 @@ def main():
             # Actions for main menu
             new_game = action.get('new_game')
             load_saved_game = action.get('load_game')
+            fullscreen = action.get('fullscreen')
             exit_game = action.get('exit')
 
             if show_load_error_message and (new_game or load_saved_game or exit_game):
@@ -365,6 +366,11 @@ def main():
             # Exits game
             elif exit_game:
                 break
+
+            # Toggles fullscreen
+            elif fullscreen:
+                tcod.console_set_fullscreen(not tcod.console_is_fullscreen())
+
         else:
             tcod.console_clear(con)
             play_game(player, entities, game_map, message_log, game_state, con, panel, constants)

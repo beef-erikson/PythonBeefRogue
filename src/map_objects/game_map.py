@@ -8,6 +8,7 @@ from src.entity import Entity
 from src.game_messages import Message
 from src.item_functions import cast_confuse, cast_fireball, cast_lightning, heal
 from src.map_objects.stairs import Stairs
+from src.random_utils import from_dungeon_level, random_choice_from_dict
 from src.render_functions import RenderOrder
 from src.map_objects.tile import Tile
 from src.map_objects.rectangle import Rectangle
@@ -31,8 +32,7 @@ class GameMap:
         return tiles
 
     # Populates map
-    def make_map(self, max_rooms, room_min_size, room_max_size, map_width, map_height, player,
-                 entities, max_monsters_per_room, max_items_per_room):
+    def make_map(self, max_rooms, room_min_size, room_max_size, map_width, map_height, player, entities):
         rooms = []
         num_rooms = 0
 
@@ -85,7 +85,7 @@ class GameMap:
                         self.create_h_tunnel(prev_x, new_x, new_y)
 
                 # Place monsters and items
-                self.place_entities(new_room, entities, max_monsters_per_room, max_items_per_room)
+                self.place_entities(new_room, entities)
 
                 # Append the new room to the list
                 rooms.append(new_room)
@@ -117,9 +117,27 @@ class GameMap:
             self.tiles[x][y].block_sight = False
 
     # Places a random number of monsters and items in rooms
-    def place_entities(self, room, entities, max_monsters_per_room, max_items_per_room):
+    def place_entities(self, room, entities):
+        # Bases number of monsters and item to which level of dungeon the player is on
+        max_monsters_per_room = from_dungeon_level([[2, 1], [3, 4], [5, 6]], self.dungeon_level)
+        max_items_per_room = from_dungeon_level([[1, 1], [2, 4]], self.dungeon_level)
+
         number_of_monsters = randint(0, max_monsters_per_room)
         number_of_items = randint(0, max_items_per_room)
+
+        # Monster chances to spawn - trolls will have more weight the further down the floors a player goes
+        monster_chances = {
+            'orc': 80,
+            'troll': from_dungeon_level([[15, 3], [30, 5], [60, 7]], self.dungeon_level)
+        }
+
+        # Item chances to drop - item weight changes based on the dungeon level with less healing potions spawning
+        item_chances = {
+            'healing_potion': 35,
+            'lightning_scroll': from_dungeon_level([[25, 4]], self.dungeon_level),
+            'fireball_scroll': from_dungeon_level([[25, 6]], self.dungeon_level),
+            'confusion_scroll': from_dungeon_level([[10, 2]], self.dungeon_level)
+        }
 
         # Spawns monsters
         for i in range(number_of_monsters):
@@ -129,16 +147,18 @@ class GameMap:
             # TODO - add more monsters as you go further down in levels
             # Checks if location to place monster is empty
             if not any([entity for entity in entities if entity.x == x and entity.y == y]):
+                # Used to determine which monster to spawn
+                monster_choice = random_choice_from_dict(monster_chances)
                 # Orc
-                if randint(0, 100) < 80:
-                    fighter_component = Fighter(hp=10, defense=0, power=3, xp=35)
+                if monster_choice == 'orc':
+                    fighter_component = Fighter(hp=20, defense=0, power=4, xp=35)
                     ai_component = BasicMonster()
 
                     monster = Entity(x, y, 'o', tcod.desaturated_green, 'Orc', blocks=True,
                                      render_order=RenderOrder.ACTOR, fighter=fighter_component, ai=ai_component)
                 # Troll
                 else:
-                    fighter_component = Fighter(hp=16, defense=1, power=4, xp=100)
+                    fighter_component = Fighter(hp=30, defense=2, power=8, xp=100)
                     ai_component = BasicMonster()
 
                     monster = Entity(x, y, 'T', tcod.darker_green, 'Troll', blocks=True,
@@ -152,24 +172,25 @@ class GameMap:
             y = randint(room.y1 + 1, room.y2 - 1)
 
             if not any([entity for entity in entities if entity.x == x and entity.y == y]):
-                item_chance = randint(0, 100)
+                # Used to determine what item to spawn
+                item_choice = random_choice_from_dict(item_chances)
 
                 # Healing potion - heals 4 damage
-                if item_chance < 70:
-                    item_component = Item(use_function=heal, amount=4)
+                if item_choice == 'healing_potion':
+                    item_component = Item(use_function=heal, amount=40)
                     item = Entity(x, y, '!', tcod.violet, 'Healing Potion', render_order=RenderOrder.ITEM,
                                   item=item_component)
 
                 # Fireball scroll - deals 12 damage to all enemies in a radius of 3 tiles
-                elif item_chance < 80:
+                elif item_choice == 'fireball_scroll':
                     item_component = Item(use_function=cast_fireball, targeting=True, targeting_message=Message(
                         'Left-click a target tile for the fireball, or right-click to cancel.', tcod.light_cyan),
-                                          damage=12, radius=3)
+                                          damage=25, radius=3)
                     item = Entity(x, y, '#', tcod.red, 'Fireball Scroll', render_order=RenderOrder.ITEM,
                                   item=item_component)
 
                 # Confuse scroll - confuses enemy for 10 turns
-                elif item_chance < 90:
+                elif item_choice == 'confusion_scroll':
                     item_component = Item(use_function=cast_confuse, targeting=True, targeting_message=Message(
                         'Left-click an enemy to confuse it, or right-click to cancel', tcod.light_cyan))
                     item = Entity(x, y, '#', tcod.light_pink, 'Confusion Scroll', render_order=RenderOrder.ITEM,
@@ -177,7 +198,7 @@ class GameMap:
 
                 # Lightning scroll - deals 20 damage to nearest enemy
                 else:
-                    item_component = Item(use_function=cast_lightning, damage=20, maximum_range=5)
+                    item_component = Item(use_function=cast_lightning, damage=40, maximum_range=5)
                     item = Entity(x, y, '#', tcod.yellow, 'Lightning Scroll', render_order=RenderOrder.ITEM,
                                   item=item_component)
 
@@ -199,8 +220,7 @@ class GameMap:
         # Creates a new map
         self.tiles = self.initialize_tiles()
         self.make_map(constants['max_rooms'], constants['room_min_size'], constants['room_max_size'],
-                      constants['map_width'], constants['map_height'], player, entities,
-                      constants['max_monsters_per_room'], constants['max_items_per_room'])
+                      constants['map_width'], constants['map_height'], player, entities)
 
         # TODO note when we add stairs back up, we need to make sure that player doesn't gain health again going down
         # Gives player half of their max hp back

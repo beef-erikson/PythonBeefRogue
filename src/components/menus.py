@@ -96,7 +96,7 @@ def main_menu(con, background_image, screen_width, screen_height):
     tcod.console_print_ex(0, int(screen_width / 2), int(screen_height / 2) - 4, tcod.BKGND_NONE, tcod.CENTER,
                           'YARG - Yet Another Roguelike Game')
     tcod.console_print_ex(0, int(screen_width / 2), int(screen_height - 2), tcod.BKGND_NONE, tcod.CENTER,
-                          'Beef Erikson Studios - v2019.0.2')
+                          'Beef Erikson Studios - v2019.0.3')
 
     menu(con, '', ['New Game', 'Continue', 'Save and Quit'], 24, screen_width, screen_height)
 

@@ -81,6 +81,8 @@ def handle_main_menu(key):
         return {'load_game': True}
     elif key_char == 'c' or key.vk == tcod.KEY_ESCAPE:
         return {'exit': True}
+    elif key.vk == tcod.KEY_ENTER and key.lalt:
+        return {'fullscreen': True}
 
     # No key press
     return {}
@@ -131,6 +133,10 @@ def handle_player_turn_keys(key):
     elif key_char == 'd':
         return {'drop_inventory': True}
 
+    # Toggles fullscreen with alt+enter
+    elif key.vk == tcod.KEY_ENTER and key.lalt:
+        return {'fullscreen': True}
+
     # TODO Make player go back upstairs
     # Goes down stairs
     elif key.vk == tcod.KEY_ENTER or key.shift and key_char == '.':   # > key doesn't work, hack to make it work.
@@ -139,10 +145,6 @@ def handle_player_turn_keys(key):
     # Access character screen
     elif key_char == 'c':
         return {'show_character_screen': True}
-
-    # Toggles fullscreen with alt+enter
-    if key.vk == tcod.KEY_ENTER and key.lalt:
-        return {'fullscreen': True}
 
     # Exits game
     elif key.vk == tcod.KEY_ESCAPE:

@@ -1,6 +1,9 @@
 # YARG (Yet Another Roguelike Game)
 
-## Version 2019.0.3 (Still in development - missing enemy difficulty increase)
+![YARG](https://i.imgur.com/LWV2Oa7.png)
+
+## Version 2019.0.3 (November 7, 2019)
+### Additions
 - Stairs/Floors added; can now travel further down the dungeon.
   - Stairs will stay on screen, regardless if in field of view, once discovered.
   - Going down a level will restore half of the player's max health.
@@ -14,6 +17,24 @@
 - Character screen created.
   - Displays various characters stats.
   - Accessible via the 'c' key.
+### Modifications
+- Item drops and enemy spawning significantly changed.
+  - Each item/Creature now has a 'weight' which determines the likelihood of it being picked.
+  - When deciding what to spawn, the choices and weights are passed to a function and returns a random selection.
+  - This is more scalable than my previous system and will take all future additions into consideration.
+  - Implementation of the random functions can be seen [here](https://github.com/beef-erikson/PythonBeefRogue/blob/master/src/random_utils.py).
+  - The weights of both enemies and items change the further down the dungeon a player goes. See [here](https://github.com/beef-erikson/PythonBeefRogue/blob/master/src/map_objects/game_map.py).
+- Stat changes to player and monsters
+  - Player initial starting stats have been nerfed but starts with 100 HP.
+  - Orc now has twice the starting HP and 1 more power.
+  - Troll now has 30 HP (from 16), 1 more defense and double the power.
+- Item changes
+  - Healing potions now heal for 40 HP.
+  - Fireball scroll now deal 25 damage instead of 12 (radius of 3 from targeted area).
+  - Lightning scroll now deals 40 damage instead of 20.
+### Bug Fixes
+- Fullscreen mode now works as intended rather than try to go down stairs.
+- Fullscreen will now work from main menu as originally intended
 
 ## Version 2019.0.2 (November 5, 2019)
 - Menu added, both at start and by hitting escape.
