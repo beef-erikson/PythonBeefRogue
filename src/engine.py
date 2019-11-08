@@ -14,7 +14,11 @@ from src.render_functions import clear_all, render_all
 # TODO add message of what is at player's feet
 
 """
-       Main file where game parameters and game loop resides
+   Main file where game parameters and game loop resides
+       
+    For equipment:
+    Edit equipment, equippable, inventory components as well as equipment_slots and engine in src.
+    Also edit the player in initialize_new_game if needed.
 """
 
 
@@ -200,6 +204,7 @@ def play_game(player, entities, game_map, message_log, game_state, con, panel, c
             item_added = player_turn_result.get('item_added')
             item_consumed = player_turn_result.get('consumed')
             item_dropped = player_turn_result.get('item_dropped')
+            equip = player_turn_result.get('equip')
             targeting = player_turn_result.get('targeting')
             targeting_cancelled = player_turn_result.get('targeting_cancelled')
             xp = player_turn_result.get('xp')
@@ -230,6 +235,22 @@ def play_game(player, entities, game_map, message_log, game_state, con, panel, c
             # Item was dropped
             if item_dropped:
                 entities.append(item_dropped)
+
+                game_state = GameStates.ENEMY_TURN
+
+            # Equips item, if possible, and displays message
+            if equip:
+                equip_results = player.equipment.toggle_equip(equip)
+
+                for equip_result in equip_results:
+                    equipped = equip_result.get('equipped')
+                    dequipped = equip_result.get('dequipped')
+
+                    if equipped:
+                        message_log.add_message('You equipped the {0}'.format(equipped.name))
+
+                    if dequipped:
+                        message_log.add_message('You unequipped the {0}'.format(dequipped.name))
 
                 game_state = GameStates.ENEMY_TURN
 

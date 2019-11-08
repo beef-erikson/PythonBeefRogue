@@ -2,6 +2,9 @@
 
 ![YARG](https://i.imgur.com/LWV2Oa7.png)
 
+## Version 2019.0.4
+
+
 ## Version 2019.0.3 (November 7, 2019)
 ### Additions
 - Stairs/Floors added; can now travel further down the dungeon.

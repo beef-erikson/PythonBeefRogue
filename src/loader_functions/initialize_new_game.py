@@ -1,5 +1,6 @@
 import tcod
 
+from src.components.equipment import Equipment
 from src.components.fighter import Fighter
 from src.components.inventory import Inventory
 from src.components.level import Level
@@ -12,6 +13,10 @@ from src.render_functions import RenderOrder
 """
     Contains game variables and constants.
     These can be modified to change how the game functions.
+    
+    For equipment:
+    Edit equipment, equippable, inventory components as well as equipment_slots and engine in src.
+    Also edit the player in initialize_new_game if needed.
 """
 
 
@@ -84,8 +89,10 @@ def get_game_variables(constants):
     fighter_component = Fighter(hp=100, defense=1, power=4)
     inventory_component = Inventory(26)
     level_component = Level()
+    equipment_component = Equipment()
     player = Entity(0, 0, '@', tcod.white, 'Player', blocks=True, render_order=RenderOrder.ACTOR,
-                    fighter=fighter_component, inventory=inventory_component, level=level_component)
+                    fighter=fighter_component, inventory=inventory_component, level=level_component,
+                    equipment=equipment_component)
     entities = [player]
 
     game_map = GameMap(constants['map_width'], constants['map_height'])
