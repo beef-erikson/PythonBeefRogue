@@ -5,6 +5,8 @@ import shelve
     Handles the saving and loading of game
 """
 
+# TODO have it so when game is closed by clicking 'X', it will save the game
+
 
 # Saves game to savegame.dat
 def save_game(player, entities, game_map, message_log, game_state):

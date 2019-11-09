@@ -2,6 +2,8 @@ import tcod
 from random import randint
 
 from src.components.ai import BasicMonster
+from src.components.equipment import EquipmentSlots
+from src.components.equippable import Equippable
 from src.components.fighter import Fighter
 from src.components.item import Item
 from src.entity import Entity
@@ -15,7 +17,7 @@ from src.map_objects.rectangle import Rectangle
 
 """
     Handles functions related to creating the game map.
-    This includes monster and item spawning.
+    This includes monster, item spawning, nad equipment.
 """
 
 
@@ -134,6 +136,8 @@ class GameMap:
         # Item chances to drop - item weight changes based on the dungeon level with less healing potions spawning
         item_chances = {
             'healing_potion': 35,
+            'sword': from_dungeon_level([[5, 4]], self.dungeon_level),
+            'shield': from_dungeon_level([[15, 8]], self.dungeon_level),
             'lightning_scroll': from_dungeon_level([[25, 4]], self.dungeon_level),
             'fireball_scroll': from_dungeon_level([[25, 6]], self.dungeon_level),
             'confusion_scroll': from_dungeon_level([[10, 2]], self.dungeon_level)
@@ -180,6 +184,16 @@ class GameMap:
                     item_component = Item(use_function=heal, amount=40)
                     item = Entity(x, y, '!', tcod.violet, 'Healing Potion', render_order=RenderOrder.ITEM,
                                   item=item_component)
+
+                # Sword
+                elif item_choice == 'sword':
+                    equippable_component = Equippable(EquipmentSlots.MAIN_HAND, power_bonus=3)
+                    item = Entity(x, y, '/', tcod.sky, 'Sword', equippable=equippable_component)
+
+                # Shield
+                elif item_choice == 'shield':
+                    equippable_component = Equippable(EquipmentSlots.OFF_HAND, defense_bonus=1)
+                    item = Entity(x, y, '[', tcod.darker_orange, 'Shield', equippable=equippable_component)
 
                 # Fireball scroll - deals 12 damage to all enemies in a radius of 3 tiles
                 elif item_choice == 'fireball_scroll':

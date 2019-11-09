@@ -4,7 +4,7 @@ from src.equipment_slots import EquipmentSlots
     Equipment details
     Properties of each stat are set here as well as toggle equip command
     Edit equipment, equippable, inventory components as well as equipment_slots and engine in src.
-    Also edit the player in initialize_new_game if needed.
+    Also edit the player in initialize_new_game if needed as well as game_map to drop in map.
 """
 
 
@@ -74,7 +74,7 @@ class Equipment:
                     results.append({'dequipped': self.main_hand})
 
                 self.main_hand = equippable_entity
-                results.append({'equipped': self.main_hand})
+                results.append({'equipped': equippable_entity})
 
         # Off Hand
         elif slot == EquipmentSlots.OFF_HAND:
@@ -85,10 +85,10 @@ class Equipment:
 
             # Equips off hand, switching out old item if present
             else:
-                if self.off_hand == equippable_entity:
-                    results.append({'dequipped': equippable_entity})
+                if self.off_hand:
+                    results.append({'dequipped': self.off_hand})
 
                 self.off_hand = equippable_entity
-                results.append({'dequipped': equippable_entity})
+                results.append({'equipped': equippable_entity})
 
         return results

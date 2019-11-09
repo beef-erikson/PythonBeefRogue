@@ -2,7 +2,37 @@
 
 ![YARG](https://i.imgur.com/LWV2Oa7.png)
 
-## Version 2019.0.4
+[Follow My Progress at Twitter!](https://twitter.com/Beef_Studios)
+
+## Version 2019.0.4 (November 9, 2019)
+### Equipment Implemented!
+- Equipment is now implemented for 'main hand' and 'off hand' weapons.
+  - equipment.py added - defines stat buffs and toggle equipment on and off.
+  - equippable.py added - basic template for what equipment can effect.
+  - equipment_slots.py added - a simple enum that lists what slots can have equipment.
+- Player now has a dagger equipped at the beginning of game (power bonus of 2).
+- Sword added. 
+  - This has the possibility to spawn starting at dungeon level 4.
+  - Gives a power bonus of 3 and equips to main hand slot.
+- Shield added. 
+  - This has the possibility to spawn starting at dungeon level 8.
+  - Adds 1 to the defense bonus and equips to off hand slot.
+### Modifications
+- item.py Modified to allow the use function to equip/un-equip items.
+- fighter.py got properties added to determine the stats based on equipped items.
+- entity.py got properties added for equipment and equippable items.
+- engine.py modified to implement the actual equipping of item to an entity.
+- game_map.py added in drop rates for items in the dungeon along with description/colors.
+- menus.py adjusted to show if items are equipped or not when in inventory menu.
+- render_all.py needed arguments changed to match changes to menus.py.
+- Player's initial starting power nerfed due to having a dagger at beginning.
+### Bug Fixes
+- Escape key being hit in 'main menu' now continues, rather than quit game.
+- Enter key on keypad now goes down a floor in addition to the 'regular' enter key.
+- In the same vein, the '>' key now goes down floors, previously was not working.
+
+This will be the final version for a fair bit (I'm guessing). I will be implementing 
+items/player/enemies into a database, which is going to require research on my part.
 
 
 ## Version 2019.0.3 (November 7, 2019)

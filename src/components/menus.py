@@ -41,6 +41,7 @@ def menu(con, header, options, width, screen_width, screen_height):
         tcod.console_blit(window, 0, 0, width, height, 0, x, y, 1.0, 0.5)
 
 
+# TODO Add equipped items to this screen.
 # Creates character menu screen
 def character_screen(player, character_screen_width, character_screen_height, screen_width, screen_height):
     window = tcod.console_new(character_screen_width, character_screen_height)
@@ -68,12 +69,22 @@ def character_screen(player, character_screen_width, character_screen_height, sc
     tcod.console_blit(window, 0, 0, character_screen_width, character_screen_height, 0, x, y, 1.0, 0.7)
 
 
+# TODO Either have equipment move to top of list or create a new menu for equipment.
 # Inventory menu that lists each item as an option
-def inventory_menu(con, header, inventory, inventory_width, screen_width, screen_height):
-    if len(inventory.items) == 0:
+def inventory_menu(con, header, player, inventory_width, screen_width, screen_height):
+    if len(player.inventory.items) == 0:
         options = ['Inventory is empty.']
     else:
-        options = [item.name for item in inventory.items]
+        options = []
+
+        # Shows equipment in the inventory as equipped, if they are.
+        for item in player.inventory.items:
+            if player.equipment.main_hand == item:
+                options.append('{0} (on main hand)'.format(item.name))
+            elif player.equipment.off_hand == item:
+                options.append('{0} (on off hand)'. format(item.name))
+            else:
+                options.append(item.name)
 
     menu(con, header, options, inventory_width, screen_width, screen_height)
 
@@ -96,7 +107,7 @@ def main_menu(con, background_image, screen_width, screen_height):
     tcod.console_print_ex(0, int(screen_width / 2), int(screen_height / 2) - 4, tcod.BKGND_NONE, tcod.CENTER,
                           'YARG - Yet Another Roguelike Game')
     tcod.console_print_ex(0, int(screen_width / 2), int(screen_height - 2), tcod.BKGND_NONE, tcod.CENTER,
-                          'Beef Erikson Studios - v2019.0.3')
+                          'Beef Erikson Studios - v2019.0.4')
 
     menu(con, '', ['New Game', 'Continue', 'Save and Quit'], 24, screen_width, screen_height)
 

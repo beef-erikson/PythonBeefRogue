@@ -1,7 +1,7 @@
 """
     Handles equipment components
     Edit equipment, equippable, inventory components as well as equipment_slots and engine in src.
-    Also edit the player in initialize_new_game if needed.
+    Also edit the player in initialize_new_game if needed as well as game_map to drop in map.
 """
 
 

@@ -7,7 +7,7 @@ from src.game_messages import Message
     Capacity - number of items player can carry
     Items - items in the inventory
     Edit equipment, equippable, inventory components as well as equipment_slots and engine in src for equipment.
-    Also edit the player in initialize_new_game if needed.
+    Also edit the player in initialize_new_game if needed as well as game_map to drop in map.
 """
 
 

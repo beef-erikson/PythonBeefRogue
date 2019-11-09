@@ -1,10 +1,12 @@
 import tcod
 
 from src.components.equipment import Equipment
+from src.components.equippable import Equippable
 from src.components.fighter import Fighter
 from src.components.inventory import Inventory
 from src.components.level import Level
 from src.entity import Entity
+from src.equipment_slots import EquipmentSlots
 from src.game_messages import MessageLog
 from src.game_states import GameStates
 from src.map_objects.game_map import GameMap
@@ -16,7 +18,7 @@ from src.render_functions import RenderOrder
     
     For equipment:
     Edit equipment, equippable, inventory components as well as equipment_slots and engine in src.
-    Also edit the player in initialize_new_game if needed.
+    Also edit game_map to drop in map.
 """
 
 
@@ -58,7 +60,7 @@ def get_game_constants():
         'light_ground': tcod.Color(200, 180, 50)
     }
 
-    game_title = 'YARG - Yet Another Rogue-like Game - v2019.0.3'
+    game_title = 'YARG - Yet Another Rogue-like Game - v2019.0.4'
 
     constants = {
         'game_title': game_title,
@@ -86,7 +88,7 @@ def get_game_constants():
 
 # Game Variables
 def get_game_variables(constants):
-    fighter_component = Fighter(hp=100, defense=1, power=4)
+    fighter_component = Fighter(hp=100, defense=1, power=2)
     inventory_component = Inventory(26)
     level_component = Level()
     equipment_component = Equipment()
@@ -94,6 +96,11 @@ def get_game_variables(constants):
                     fighter=fighter_component, inventory=inventory_component, level=level_component,
                     equipment=equipment_component)
     entities = [player]
+
+    equippable_component = Equippable(EquipmentSlots.MAIN_HAND, power_bonus=2)
+    dagger = Entity(0, 0, '-', tcod.sky, 'Dagger', equippable=equippable_component)
+    player.inventory.add_item(dagger)
+    player.equipment.toggle_equip(dagger)
 
     game_map = GameMap(constants['map_width'], constants['map_height'])
     game_map.make_map(constants['max_rooms'], constants['room_min_size'], constants['room_max_size'],
