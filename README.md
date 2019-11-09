@@ -1,6 +1,6 @@
 # YARG (Yet Another Roguelike Game)
 
-![YARG](https://i.imgur.com/LWV2Oa7.png)
+![YARG](https://i.imgur.com/XCNHVGR.png)
 
 [Follow My Progress at Twitter!](https://twitter.com/Beef_Studios)
 
